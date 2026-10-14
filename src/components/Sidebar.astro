@@ -1,0 +1,28 @@
+---
+import { site, nav } from "../data/site";
+---
+
+<header class="sidebar">
+    <div>
+        <h1>{site.name}</h1>
+        <h2>{site.role}</h2>
+        <p class="bio">{site.bio}</p>
+
+        <nav>
+            <ul>
+                {
+                    nav.map((item) => (
+                        <li>
+                            <a href={item.href}>{item.label}</a>
+                        </li>
+                    ))
+                }
+            </ul>
+        </nav>
+    </div>
+
+    <div>
+        <h1>resume</h1>
+        <
+    </div>
+</header>
