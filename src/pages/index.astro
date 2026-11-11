@@ -212,6 +212,14 @@ const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", y
         object-fit: cover;
         border-bottom: 1px solid var(--border);
     }
+    /* Show the whole image, so square badges and landscape certificates both fit */
+    .cert img {
+        object-fit: contain;
+        padding: 12px;
+        background:
+            radial-gradient(circle at 50% 60%, rgba(124, 58, 237, 0.18), transparent 70%),
+            var(--surface-2);
+    }
     .seal {
         display: grid;
         place-items: center;
