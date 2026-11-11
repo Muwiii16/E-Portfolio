@@ -45,7 +45,7 @@ const certificates = defineCollection({
         issuer: z.string(),
         date: z.coerce.date(),
         image: optionalText,
-        url: optionalUrl,
+        url: optionalText, // verification link, or a file like /certificates/x.pdf
     }),
 });
 

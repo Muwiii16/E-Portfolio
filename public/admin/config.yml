@@ -72,7 +72,7 @@ collections:
       - { name: issuer, label: Issued by, widget: string }
       - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD }
       - { name: image, label: Certificate image, widget: image, required: false }
-      - { name: url, label: Verification link, widget: string, required: false }
+      - { name: url, label: Verification link or PDF path, widget: string, required: false, hint: 'e.g. a Credly link, or /certificates/my-cert.pdf' }
 
   - name: achievements
     label: Achievements
