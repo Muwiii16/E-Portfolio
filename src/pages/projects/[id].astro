@@ -1,0 +1,405 @@
+---
+import { getCollection, render } from "astro:content";
+import { Code } from "astro:components";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import Cover from "../../components/Cover.astro";
+import SectionHeading from "../../components/SectionHeading.astro";
+import { site } from "../../data/site";
+
+// One page per project file: src/content/projects/tower-defense.md -> /projects/tower-defense/
+export async function getStaticPaths() {
+    const projects = await getCollection("projects");
+    return projects.map((project) => ({ params: { id: project.id }, props: { project } }));
+}
+
+const { project } = Astro.props;
+const { title, summary, type, course, date, tags, repo, demo, cover, screenshots, snippets } =
+    project.data;
+const { Content } = await render(project);
+
+// Gallery = screenshots, or the cover if there are none
+const gallery = screenshots.length ? screenshots : cover ? [{ src: cover, caption: "" }] : [];
+---
+
+<BaseLayout title={`${title} — ${site.name}`} description={summary}>
+    <article class="wrap">
+        <a href="/#projects" class="back mono">← back to projects</a>
+
+        <header class="reveal">
+            <p class="meta mono">
+                <span class={`type ${type}`}>{type}</span>
+                {course && <span>· {course}</span>}
+                <span>· {date.getFullYear()}</span>
+            </p>
+            <h1>{title}</h1>
+            <p class="summary">{summary}</p>
+            <div class="tags">{tags.map((t) => <span class="tag">{t}</span>)}</div>
+            <div class="links">
+                {repo && <a class="btn" href={repo} target="_blank" rel="noopener">View source ↗</a>}
+                {demo && <a class="btn" href={demo} target="_blank" rel="noopener">Live demo ↗</a>}
+            </div>
+        </header>
+
+        <section class="reveal">
+            <SectionHeading index="01" title="Showcase" />
+            <figure class="stage">
+                {
+                    gallery.length ? (
+                        <img id="stage-img" src={gallery[0].src} alt={gallery[0].caption || title} />
+                    ) : (
+                        <div class="stage-ph">
+                            <Cover title={`${title}: screenshots coming soon`} />
+                        </div>
+                    )
+                }
+                {gallery[0]?.caption && <figcaption id="stage-cap">{gallery[0].caption}</figcaption>}
+            </figure>
+            {
+                gallery.length > 1 && (
+                    <div class="thumbs">
+                        {gallery.map((g, i) => (
+                            <button
+                                class:list={["thumb", { on: i === 0 }]}
+                                data-src={g.src}
+                                data-cap={g.caption}
+                                aria-label={`Show screenshot ${i + 1}`}
+                            >
+                                <img src={g.src} alt="" loading="lazy" />
+                            </button>
+                        ))}
+                    </div>
+                )
+            }
+        </section>
+
+        <section class="reveal prose">
+            <SectionHeading index="02" title="About the project" />
+            <Content />
+        </section>
+
+        {
+            snippets.length > 0 && (
+                <section class="reveal">
+                    <SectionHeading index="03" title="Behind the code" />
+                    <div class="explorer">
+                        <div class="files" role="tablist" aria-label="Code files">
+                            <p class="mono files-title">EXPLORER</p>
+                            {snippets.map((s, i) => (
+                                <button
+                                    role="tab"
+                                    class:list={["file mono", { on: i === 0 }]}
+                                    data-tab={i}
+                                    aria-selected={i === 0 ? "true" : "false"}
+                                >
+                                    {s.file.split("/").pop()}
+                                </button>
+                            ))}
+                        </div>
+                        <div class="panes">
+                            {snippets.map((s, i) => (
+                                <div class="pane" data-pane={i} hidden={i !== 0} role="tabpanel">
+                                    <p class="path mono">{s.file}</p>
+                                    <p class="note">
+                                        <span class="mono">//</span> {s.note}
+                                    </p>
+                                    <Code code={s.code.trimEnd()} lang={s.lang as any} theme="tokyo-night" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </section>
+            )
+        }
+
+        <footer class="mono">
+            <a href="/#projects">← all projects</a>
+            {repo && <a href={repo} target="_blank" rel="noopener">full source on GitHub ↗</a>}
+        </footer>
+    </article>
+</BaseLayout>
+
+<script>
+    // Gallery: click a thumbnail to show it on the main stage
+    const stageImg = document.querySelector<HTMLImageElement>("#stage-img");
+    const stageCap = document.querySelector<HTMLElement>("#stage-cap");
+    document.querySelectorAll<HTMLButtonElement>(".thumb").forEach((t, _, all) =>
+        t.addEventListener("click", () => {
+            if (!stageImg) return;
+            stageImg.src = t.dataset.src!;
+            if (stageCap) stageCap.textContent = t.dataset.cap ?? "";
+            all.forEach((x) => x.classList.toggle("on", x === t));
+        }),
+    );
+
+    // Code explorer tabs
+    const tabs = document.querySelectorAll<HTMLButtonElement>("[data-tab]");
+    const panes = document.querySelectorAll<HTMLElement>("[data-pane]");
+    tabs.forEach((tab) =>
+        tab.addEventListener("click", () => {
+            tabs.forEach((t) => {
+                t.classList.toggle("on", t === tab);
+                t.setAttribute("aria-selected", String(t === tab));
+            });
+            panes.forEach((p) => (p.hidden = p.dataset.pane !== tab.dataset.tab));
+        }),
+    );
+</script>
+
+<style>
+    .wrap {
+        width: min(960px, 100% - 2 * var(--gutter));
+        margin-inline: auto;
+        padding-block: 56px;
+    }
+    .back {
+        font-size: 0.85rem;
+        color: var(--muted);
+    }
+    .back:hover {
+        color: var(--accent-soft);
+    }
+
+    header {
+        margin: 40px 0 88px;
+    }
+    .meta {
+        display: flex;
+        gap: 6px;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--muted);
+    }
+    .type.school {
+        color: #fbbf24;
+    }
+    .type.personal {
+        color: #34d399;
+    }
+    h1 {
+        font-size: clamp(2.2rem, 6vw, 3.6rem);
+        line-height: 1.05;
+        letter-spacing: -0.02em;
+        color: var(--text-strong);
+        margin: 10px 0 16px;
+    }
+    .summary {
+        font-size: 1.15rem;
+        max-width: 60ch;
+    }
+    .tags,
+    .links {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 20px;
+    }
+    .links {
+        gap: 12px;
+        margin-top: 28px;
+    }
+
+    section {
+        margin-bottom: 96px;
+    }
+
+    /* Showcase */
+    .stage {
+        margin: 0;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: var(--surface);
+    }
+    .stage img {
+        width: 100%;
+        max-height: 560px;
+        object-fit: contain;
+        background: #000;
+    }
+    .stage-ph {
+        aspect-ratio: 16 / 8;
+    }
+    figcaption {
+        padding: 12px 16px;
+        font-size: 0.88rem;
+        color: var(--muted);
+        border-top: 1px solid var(--border);
+    }
+    .thumbs {
+        display: flex;
+        gap: 10px;
+        margin-top: 12px;
+        overflow-x: auto;
+    }
+    .thumb {
+        flex: 0 0 120px;
+        aspect-ratio: 16 / 10;
+        padding: 0;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        overflow: hidden;
+        background: none;
+        cursor: pointer;
+        opacity: 0.55;
+        transition: opacity 0.2s, border-color 0.2s;
+    }
+    .thumb img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .thumb:hover,
+    .thumb.on {
+        opacity: 1;
+    }
+    .thumb.on {
+        border-color: var(--accent);
+    }
+
+    /* Markdown write-up */
+    .prose :global(h2) {
+        color: var(--text-strong);
+        font-size: 1.2rem;
+        margin: 32px 0 10px;
+    }
+    .prose :global(p),
+    .prose :global(li) {
+        max-width: 68ch;
+    }
+    .prose :global(p + p) {
+        margin-top: 14px;
+    }
+    .prose :global(ul) {
+        padding-left: 1.2em;
+    }
+    .prose :global(li::marker) {
+        color: var(--accent-soft);
+    }
+    .prose :global(a) {
+        color: var(--accent-soft);
+        border-bottom: 1px solid currentColor;
+    }
+    .prose :global(code) {
+        font-family: var(--font-mono);
+        font-size: 0.88em;
+        background: var(--surface);
+        padding: 2px 6px;
+        border-radius: 4px;
+    }
+    .prose :global(pre) {
+        padding: 16px;
+        border-radius: var(--radius);
+        overflow-x: auto;
+        margin: 16px 0;
+    }
+
+    /* Code explorer: a mini editor window */
+    .explorer {
+        display: grid;
+        grid-template-columns: 250px 1fr;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        background: #1a1b26;
+    }
+    .files {
+        display: flex;
+        flex-direction: column;
+        padding: 12px 0;
+        background: #16161e;
+        border-right: 1px solid var(--border);
+    }
+    .files-title {
+        font-size: 0.68rem;
+        letter-spacing: 0.12em;
+        color: var(--muted);
+        padding: 0 16px 10px;
+    }
+    .file {
+        text-align: left;
+        font-size: 0.8rem;
+        padding: 7px 16px;
+        border: 0;
+        border-left: 2px solid transparent;
+        background: none;
+        color: var(--muted);
+        cursor: pointer;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .file:hover {
+        color: var(--text-strong);
+    }
+    .file.on {
+        color: var(--text-strong);
+        background: rgba(124, 58, 237, 0.15);
+        border-left-color: var(--accent);
+    }
+    .pane {
+        min-width: 0;
+    }
+    .path {
+        font-size: 0.75rem;
+        color: var(--muted);
+        padding: 10px 18px;
+        border-bottom: 1px solid var(--border);
+    }
+    .note {
+        padding: 14px 18px;
+        font-size: 0.92rem;
+        color: var(--text);
+        background: rgba(124, 58, 237, 0.08);
+        border-bottom: 1px solid var(--border);
+    }
+    .note .mono {
+        color: var(--accent-soft);
+    }
+    .pane :global(pre) {
+        margin: 0;
+        padding: 18px;
+        font-size: 0.82rem;
+        line-height: 1.7;
+        max-height: 520px;
+        overflow: auto;
+    }
+
+    @media (max-width: 720px) {
+        .explorer {
+            grid-template-columns: 1fr;
+        }
+        .files {
+            flex-direction: row;
+            overflow-x: auto;
+            padding: 0;
+            border-right: 0;
+            border-bottom: 1px solid var(--border);
+        }
+        .files-title {
+            display: none;
+        }
+        .file {
+            border-left: 0;
+            border-bottom: 2px solid transparent;
+            padding: 10px 14px;
+        }
+        .file.on {
+            border-bottom-color: var(--accent);
+        }
+    }
+
+    footer {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
+        font-size: 0.85rem;
+        color: var(--muted);
+        padding-top: 32px;
+        border-top: 1px solid var(--border);
+    }
+    footer a:hover {
+        color: var(--accent-soft);
+    }
+</style>

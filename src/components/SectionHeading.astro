@@ -1,0 +1,41 @@
+---
+interface Props {
+    index: string;
+    title: string;
+    count?: number;
+}
+const { index, title, count } = Astro.props;
+---
+
+<h2 class="heading">
+    <span class="mono idx">{index}.</span>
+    <span>{title}</span>
+    {count !== undefined && <span class="mono count">[{count}]</span>}
+    <span class="rule"></span>
+</h2>
+
+<style>
+    .heading {
+        display: flex;
+        align-items: baseline;
+        gap: 12px;
+        font-size: 1.6rem;
+        color: var(--text-strong);
+        letter-spacing: -0.01em;
+        margin-bottom: 32px;
+    }
+    .idx {
+        font-size: 1rem;
+        color: var(--accent-soft);
+    }
+    .count {
+        font-size: 0.8rem;
+        color: var(--muted);
+    }
+    .rule {
+        flex: 1;
+        height: 1px;
+        background: var(--border);
+        align-self: center;
+    }
+</style>

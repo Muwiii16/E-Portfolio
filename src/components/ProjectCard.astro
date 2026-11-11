@@ -1,0 +1,103 @@
+---
+import type { CollectionEntry } from "astro:content";
+import Cover from "./Cover.astro";
+
+interface Props {
+    project: CollectionEntry<"projects">;
+}
+const { project } = Astro.props;
+const { title, summary, type, tags, cover, date, course } = project.data;
+---
+
+<a href={`/projects/${project.id}/`} class="card reveal" data-type={type}>
+    <div class="thumb">
+        <Cover src={cover} title={title} />
+    </div>
+    <div class="body">
+        <p class="meta mono">
+            <span class={`type ${type}`}>{type}</span>
+            {course && <span>· {course}</span>}
+            <span>· {date.getFullYear()}</span>
+        </p>
+        <h3>{title} <span class="arrow">↗</span></h3>
+        <p class="summary">{summary}</p>
+        <div class="tags">{tags.map((t) => <span class="tag">{t}</span>)}</div>
+    </div>
+</a>
+
+<style>
+    .card {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        gap: 24px;
+        padding: 20px;
+        border: 1px solid transparent;
+        border-radius: var(--radius);
+        transition: background 0.25s, border-color 0.25s, transform 0.25s;
+    }
+    .card:hover {
+        background: rgba(19, 28, 49, 0.7);
+        border-color: var(--border);
+        transform: translateY(-2px);
+    }
+    .thumb {
+        aspect-ratio: 16 / 10;
+        border-radius: 8px;
+        overflow: hidden;
+        border: 1px solid var(--border);
+    }
+    .card:hover .thumb :global(img) {
+        transform: scale(1.04);
+    }
+    .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        font-size: 0.72rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+    }
+    .type.school {
+        color: #fbbf24;
+    }
+    .type.personal {
+        color: #34d399;
+    }
+    h3 {
+        color: var(--text-strong);
+        font-size: 1.15rem;
+        margin: 6px 0;
+    }
+    .arrow {
+        display: inline-block;
+        color: var(--accent-soft);
+        transition: transform 0.2s;
+    }
+    .card:hover h3 {
+        color: var(--accent-soft);
+    }
+    .card:hover .arrow {
+        transform: translate(3px, -3px);
+    }
+    .summary {
+        font-size: 0.95rem;
+    }
+    .tags {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 14px;
+    }
+
+    @media (max-width: 640px) {
+        .card {
+            grid-template-columns: 1fr;
+            padding: 0 0 8px;
+        }
+        .card:hover {
+            background: none;
+            border-color: transparent;
+        }
+    }
+</style>

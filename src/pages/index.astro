@@ -1,17 +1,294 @@
 ---
+import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
+import Sidebar from "../components/Sidebar.astro";
+import SectionHeading from "../components/SectionHeading.astro";
+import ProjectCard from "../components/ProjectCard.astro";
+import { site } from "../data/site";
 
-const name = "Luigi Gonzales";
-const role = "Computer Science Student";
+const newestFirst = (a: { data: { date: Date } }, b: { data: { date: Date } }) =>
+    b.data.date.valueOf() - a.data.date.valueOf();
+
+const achievements = (await getCollection("achievements")).sort(newestFirst);
+const certificates = (await getCollection("certificates")).sort(newestFirst);
+// Featured projects first, then newest
+const projects = (await getCollection("projects")).sort(
+    (a, b) => Number(b.data.featured) - Number(a.data.featured) || newestFirst(a, b),
+);
+
+const monthYear = (d: Date) => d.toLocaleDateString("en-US", { month: "short", year: "numeric" });
 ---
 
-<BaseLayout title={name}>
-	<h1>{name}</h1>
-	<p>{role}</p>
+<BaseLayout title={`${site.name} — ${site.role}`}>
+    <div class="page">
+        <Sidebar />
+
+        <main>
+            <section id="achievements">
+                <SectionHeading index="01" title="Achievements" count={achievements.length} />
+                {achievements.length === 0 && <p class="empty mono">// coming soon</p>}
+                <ol class="timeline">
+                    {
+                        achievements.map((a) => (
+                            <li class="reveal">
+                                <time class="mono">{monthYear(a.data.date)}</time>
+                                <div>
+                                    <h3>{a.data.title}</h3>
+                                    <p class="event">{a.data.event}</p>
+                                    {a.data.description && <p class="desc">{a.data.description}</p>}
+                                </div>
+                            </li>
+                        ))
+                    }
+                </ol>
+            </section>
+
+            <section id="certificates">
+                <SectionHeading index="02" title="Certificates" count={certificates.length} />
+                {certificates.length === 0 && <p class="empty mono">// coming soon</p>}
+                <div class="certs">
+                    {
+                        certificates.map((c) => {
+                            const Tag = c.data.url ? "a" : "div";
+                            return (
+                                <Tag
+                                    class="cert reveal"
+                                    href={c.data.url}
+                                    target={c.data.url ? "_blank" : undefined}
+                                    rel={c.data.url ? "noopener" : undefined}
+                                >
+                                    {c.data.image ? (
+                                        <img src={c.data.image} alt={c.data.title} loading="lazy" />
+                                    ) : (
+                                        <div class="seal" aria-hidden="true">
+                                            ✦
+                                        </div>
+                                    )}
+                                    <div class="cert-body">
+                                        <p class="mono issuer">{c.data.issuer}</p>
+                                        <h3>{c.data.title}</h3>
+                                        <p class="mono date">
+                                            {monthYear(c.data.date)}
+                                            {c.data.url && " · verify ↗"}
+                                        </p>
+                                    </div>
+                                </Tag>
+                            );
+                        })
+                    }
+                </div>
+            </section>
+
+            <section id="projects">
+                <SectionHeading index="03" title="Projects" count={projects.length} />
+                <div class="filters mono" role="group" aria-label="Filter projects">
+                    <button data-filter="all" class="on">all</button>
+                    <button data-filter="school">school</button>
+                    <button data-filter="personal">personal</button>
+                </div>
+                <div class="projects">
+                    {projects.map((p) => <ProjectCard project={p} />)}
+                </div>
+                <a class="more mono" href={site.socials[0].url} target="_blank" rel="noopener">
+                    See everything on GitHub ↗
+                </a>
+            </section>
+
+            <footer class="mono">
+                Built with Astro by {site.name} · {new Date().getFullYear()}
+            </footer>
+        </main>
+    </div>
 </BaseLayout>
 
+<script>
+    // Project filters
+    const buttons = document.querySelectorAll<HTMLButtonElement>("[data-filter]");
+    const cards = document.querySelectorAll<HTMLElement>(".projects [data-type]");
+    buttons.forEach((btn) =>
+        btn.addEventListener("click", () => {
+            const f = btn.dataset.filter;
+            buttons.forEach((b) => b.classList.toggle("on", b === btn));
+            cards.forEach((c) => (c.hidden = f !== "all" && c.dataset.type !== f));
+        }),
+    );
+</script>
+
 <style>
-	h1 {
-		color: #7c3aed;
-	}
+    .page {
+        width: min(var(--max), 100% - 2 * var(--gutter));
+        margin-inline: auto;
+    }
+    @media (min-width: 1024px) {
+        .page {
+            display: grid;
+            grid-template-columns: 5fr 7fr;
+            gap: 64px;
+        }
+        main {
+            padding-block: 88px;
+        }
+    }
+
+    section {
+        margin-bottom: 112px;
+    }
+    .empty {
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+    h3 {
+        color: var(--text-strong);
+        font-size: 1.05rem;
+    }
+
+    /* Achievements timeline */
+    .timeline {
+        list-style: none;
+        padding: 0;
+        border-left: 1px solid var(--border);
+    }
+    .timeline li {
+        position: relative;
+        display: grid;
+        grid-template-columns: 96px 1fr;
+        gap: 16px;
+        padding: 0 0 32px 24px;
+    }
+    .timeline li::before {
+        content: "";
+        position: absolute;
+        left: -5px;
+        top: 7px;
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background: var(--bg);
+        border: 2px solid var(--accent);
+    }
+    .timeline time {
+        font-size: 0.78rem;
+        color: var(--muted);
+        padding-top: 3px;
+    }
+    @media (max-width: 640px) {
+        .timeline li {
+            grid-template-columns: 1fr;
+            gap: 2px;
+        }
+    }
+    .event {
+        color: var(--accent-soft);
+        font-size: 0.9rem;
+    }
+    .desc {
+        font-size: 0.93rem;
+        margin-top: 6px;
+    }
+
+    /* Certificates */
+    .certs {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 16px;
+    }
+    .cert {
+        display: flex;
+        flex-direction: column;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden;
+        transition: border-color 0.25s, transform 0.25s;
+    }
+    a.cert:hover {
+        border-color: var(--accent);
+        transform: translateY(-3px);
+    }
+    .cert img,
+    .seal {
+        aspect-ratio: 4 / 3;
+        width: 100%;
+        object-fit: cover;
+        border-bottom: 1px solid var(--border);
+    }
+    .seal {
+        display: grid;
+        place-items: center;
+        font-size: 2.4rem;
+        color: var(--accent-soft);
+        background:
+            repeating-linear-gradient(45deg, transparent 0 10px, rgba(124, 58, 237, 0.06) 10px 11px),
+            var(--surface-2);
+    }
+    .cert-body {
+        padding: 16px;
+    }
+    .issuer {
+        font-size: 0.72rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--accent-soft);
+    }
+    .cert h3 {
+        font-size: 0.98rem;
+        margin: 4px 0 8px;
+    }
+    .date {
+        font-size: 0.75rem;
+        color: var(--muted);
+    }
+
+    /* Projects */
+    .filters {
+        display: flex;
+        gap: 8px;
+        margin: -12px 0 20px;
+    }
+    .filters button {
+        font: inherit;
+        font-size: 0.8rem;
+        padding: 6px 14px;
+        border-radius: 99px;
+        border: 1px solid var(--border);
+        background: none;
+        color: var(--muted);
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .filters button:hover {
+        color: var(--text-strong);
+    }
+    .filters button.on {
+        background: var(--accent);
+        border-color: var(--accent);
+        color: #fff;
+    }
+    .projects {
+        display: grid;
+        gap: 12px;
+        margin-inline: -20px;
+    }
+    @media (max-width: 640px) {
+        .projects {
+            margin-inline: 0;
+            gap: 40px;
+        }
+    }
+    .more {
+        display: inline-block;
+        margin-top: 32px;
+        font-size: 0.85rem;
+        color: var(--text-strong);
+        border-bottom: 1px solid var(--accent);
+    }
+    .more:hover {
+        color: var(--accent-soft);
+    }
+
+    footer {
+        font-size: 0.75rem;
+        color: var(--muted);
+        padding-bottom: 48px;
+    }
 </style>

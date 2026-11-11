@@ -1,0 +1,114 @@
+# Dashboard settings (Sveltia CMS). Each "collection" below becomes a section in the dashboard,
+# and each "field" becomes an input in its form. Field names must match src/content.config.ts.
+
+backend:
+  name: github
+  repo: Muwiii16/E-Portfolio
+  branch: main
+
+# Default place for uploaded files (collections below override it)
+media_folder: public/uploads
+public_folder: /uploads
+
+collections:
+  - name: projects
+    label: Projects
+    label_singular: Project
+    description: School and personal projects. Each one gets its own page.
+    folder: src/content/projects
+    create: true
+    slug: '{{slug}}'
+    media_folder: /public/projects
+    public_folder: /projects
+    summary: '{{title}} · {{type}}'
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: summary, label: One-line summary, widget: text }
+      - { name: type, label: Type, widget: select, options: [school, personal], default: personal }
+      - { name: course, label: Course (school projects), widget: string, required: false }
+      - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD }
+      - { name: tags, label: Tags / tech used, widget: list, required: false }
+      - { name: repo, label: GitHub repo URL, widget: string, required: false }
+      - { name: demo, label: Live demo URL, widget: string, required: false }
+      - { name: featured, label: Featured (shown first), widget: boolean, default: false, required: false }
+      - { name: cover, label: Cover image, widget: image, required: false }
+      - name: screenshots
+        label: Screenshots
+        label_singular: Screenshot
+        widget: list
+        required: false
+        fields:
+          - { name: src, label: Image, widget: image }
+          - { name: caption, label: Caption, widget: string, required: false }
+      - name: snippets
+        label: Code snippets
+        label_singular: Snippet
+        widget: list
+        required: false
+        summary: '{{file}}'
+        fields:
+          - { name: file, label: File path, widget: string, hint: 'e.g. src/game/Enemy.java' }
+          - name: lang
+            label: Language
+            widget: select
+            options: [java, javascript, jsx, typescript, tsx, python, php, c, cpp, csharp, html, css, sql, kotlin, dart, json, bash]
+          - { name: note, label: Why this code matters, widget: text }
+          - { name: code, label: Code, widget: text }
+      - { name: body, label: Write-up (overview, highlights, what I learned), widget: markdown, required: false }
+
+  - name: certificates
+    label: Certificates
+    label_singular: Certificate
+    folder: src/content/certificates
+    create: true
+    slug: '{{slug}}'
+    media_folder: /public/certificates
+    public_folder: /certificates
+    summary: '{{title}} · {{issuer}}'
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: Title, widget: string }
+      - { name: issuer, label: Issued by, widget: string }
+      - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD }
+      - { name: image, label: Certificate image, widget: image, required: false }
+      - { name: url, label: Verification link, widget: string, required: false }
+
+  - name: achievements
+    label: Achievements
+    label_singular: Achievement
+    folder: src/content/achievements
+    create: true
+    slug: '{{slug}}'
+    summary: '{{title}} · {{event}}'
+    sortable_fields: [date, title]
+    fields:
+      - { name: title, label: Title, widget: string, hint: 'e.g. 1st Place, Dean''s Lister' }
+      - { name: event, label: Event / organization, widget: string }
+      - { name: date, label: Date, widget: datetime, time_format: false, format: YYYY-MM-DD }
+      - { name: description, label: Description, widget: text, required: false }
+
+  - name: settings
+    label: Profile
+    files:
+      - name: site
+        label: Profile & links
+        file: src/data/site.json
+        media_folder: /public
+        public_folder: /
+        fields:
+          - { name: name, label: Name, widget: string }
+          - { name: handle, label: GitHub username, widget: string }
+          - { name: role, label: Role, widget: string }
+          - { name: bio, label: Bio, widget: text }
+          - { name: photo, label: Photo, widget: image }
+          - { name: status, label: Status line, widget: string, hint: 'e.g. Open to internships' }
+          - { name: email, label: Email, widget: string, required: false }
+          - { name: resume, label: Resume (PDF), widget: file, required: false }
+          - name: socials
+            label: Social links
+            label_singular: Link
+            widget: list
+            fields:
+              - { name: label, label: Label, widget: string }
+              - { name: url, label: URL, widget: string }

@@ -26,3 +26,5 @@ pnpm-debug.log*
 
 #my private stuffs
 private/
+# local Claude preview config
+.claude/
